@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        const vscode = acquireVsCodeApi();
+        const cspSource = vscode
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; img-src ${webview.cspSource} https:; script-src ${webview.cspSource}; style-src ${webview.cspSource};">
+    <title>Jacques</title>
+</head>
+
+<body>
+    <script>
+        function postExample() {
+            const vscode = acquireVsCodeApi();
+            vscode.postMessage({
+                command: 'example',
+                text: 'Hello from webview'
+            });
+        }
+    </script>
+    <b>Please provide an example:</b>
+    <form onsubmit="postExample()">
+        <input type="text" id="example" name="example" />
+        <input type="submit" />
+</body>
+
+</html>

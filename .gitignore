@@ -1,0 +1,9 @@
+out
+dist
+backend
+node_modules
+.vscode-test/
+*.vsix
+yarn.lock
+yarn-error.log
+

@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "Frontend",
+			"path": "."
+		},
+		{
+			"name": "Backend",
+			"path": "../Jacques"
+		}
+	],
+	"settings": {
+		"typescript.tsc.autoDetect": "off",
+		"svelte.enable-ts-plugin": true
+	}
+}
