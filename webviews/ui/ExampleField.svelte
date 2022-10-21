@@ -1,4 +1,8 @@
 <script lang="ts">
+    import {
+        VscSvelteMessageTypes,
+        SvelteVscMessageTypes,
+    } from "../../src/extension";
     import { onMount } from "svelte";
     import { Warning, Check } from "svelte-codicons";
     export let id: string;
@@ -27,7 +31,7 @@
         window.addEventListener("message", (event) => {
             const message = event.data;
             switch (message.command) {
-                case "postExampleStatusToView":
+                case VscSvelteMessageTypes.exampleStatus:
                     if (message.object.id == id) {
                         status = message.object.status;
                         if (status == "ok") {
@@ -69,7 +73,7 @@
         disabled={status == "ok"}
         on:click={() =>
             tsvscode.postMessage({
-                type: "example",
+                type: SvelteVscMessageTypes.example,
                 id: id,
                 sourceValue: sourceValue,
                 targetValue: targetValue,

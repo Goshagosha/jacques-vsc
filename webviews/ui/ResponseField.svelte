@@ -1,6 +1,8 @@
 <script lang="ts">
+    import { VscSvelteMessageTypes } from "../../src/extension";
     import OverrideField from "./OverrideField.svelte";
 
+    export let id: string = "";
     export let name: string = "";
     export let targetValue: string = "";
     export let sourceValue: string = "";
@@ -19,7 +21,7 @@
             overrideCallback();
         }}>Override rule</button
     >
-    <OverrideField {name} bind:start={overrideCallback} />
+    <OverrideField {id} {name} bind:start={overrideCallback} />
 </div>
 
 <style>

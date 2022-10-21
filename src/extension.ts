@@ -4,9 +4,30 @@ import * as vscode from 'vscode';
 import { JacquesView } from './JacquesView';
 
 export class Settings {
-	// eslint-disable-next-line @typescript-eslint/naming-convention
 	public static BACKEND_PORT = 8000;
 
+}
+
+export class BackendPaths {
+	public static pushExample = '/push_example';
+	public static overrideRule = '/override_rule';
+	public static reset = '/reset';
+	public static getRules = '/get_rules';
+	public static processAll = '/process_all_examples';
+}
+
+export class SvelteVscMessageTypes {
+	public static example = "example";
+	public static ruleOverride = "ruleOverride";
+	public static processExamples = "processExamples";
+	public static getRules = "getRulesRequest";
+	public static reset = "reset";
+}
+
+export class VscSvelteMessageTypes {
+	public static exampleStatus = 'postExampleStatusToView';
+	public static overrideStatus = 'postOverrideStatusToView';
+	public static rules = 'postRulesToView';
 }
 
 // this method is called when your extension is activated

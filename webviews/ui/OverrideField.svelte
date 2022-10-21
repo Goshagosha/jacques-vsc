@@ -1,14 +1,20 @@
 <script lang="ts">
+    import { VscSvelteMessageTypes } from "../../src/extension";
     import { onMount } from "svelte";
     import { Warning, Check } from "svelte-codicons";
+
+    export let id: string = "";
     export let name: string = "";
     let grammar: string = "";
     let code: string = "";
     let oldGrammar: string = "";
     let oldCode: string = "";
+    let hidden: Boolean = true;
     export let status: "warning" | "ok" | "none" = "none";
 
-    export function start() {}
+    export function start() {
+        hidden = false;
+    }
 
     $: {
         if (grammar != oldGrammar) {
@@ -25,7 +31,7 @@
         window.addEventListener("message", (event) => {
             const message = event.data;
             switch (message.command) {
-                case "postRuleStatusToView":
+                case VscSvelteMessageTypes.overrideStatus:
                     if (message.object.id == id) {
                         status = message.object.status;
                         if (status == "ok") {

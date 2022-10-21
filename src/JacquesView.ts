@@ -1,9 +1,10 @@
 import { ChildProcess } from 'child_process';
 import path = require('path');
 import * as vscode from 'vscode';
-import { Settings } from './extension';
+import { BackendPaths, Settings, SvelteVscMessageTypes, VscSvelteMessageTypes } from './extension';
 import { Example, Rule } from "./models";
 const { spawn } = require('child_process');
+import fetch from "node-fetch";
 
 export class JacquesView {
     public static currentPanel: JacquesView | undefined;
@@ -22,7 +23,7 @@ export class JacquesView {
     }
 
     public static async sendExampleToBackend(example: Example) {
-        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + '/push_example', {
+        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + BackendPaths.pushExample, {
             method: 'POST',
             headers: {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -31,13 +32,13 @@ export class JacquesView {
             body: JSON.stringify(example)
         });
         const json = await response.json();
-        this.postToWebview({ command: 'postExampleStatusToView', object: json });
+        this.postToWebview({ command: VscSvelteMessageTypes.exampleStatus, object: json });
         const toString = JSON.stringify(json);
         console.log("Server response: " + toString);
     }
 
-    public static async sendRuleUpdateToBackend(rule: Rule) {
-        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + '/update_rule', {
+    public static async sendRuleOverrideToBackend(rule: Rule) {
+        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + BackendPaths.overrideRule, {
             method: 'POST',
             headers: {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -46,14 +47,14 @@ export class JacquesView {
             body: JSON.stringify(rule)
         });
         const json = await response.json();
-        this.postToWebview({ command: 'postRuleStatusToView', object: json });
+        this.postToWebview({ command: VscSvelteMessageTypes.overrideStatus, object: json });
         const toString = JSON.stringify(json);
         console.log("Server response: " + toString);
     }
 
 
     public static async resetBackend() {
-        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + '/reset', {
+        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + BackendPaths.reset, {
             method: 'GET',
             headers: {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -65,7 +66,7 @@ export class JacquesView {
     }
 
     public static async sendProcessExamplesRequest() {
-        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + '/process_all_examples', {
+        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + BackendPaths.processAll, {
             method: 'GET',
             headers: {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -77,7 +78,7 @@ export class JacquesView {
     }
 
     public static async getRulesFromBackend() {
-        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + '/get_rules', {
+        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + BackendPaths.getRules, {
             method: 'GET',
             headers: {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -85,7 +86,7 @@ export class JacquesView {
             },
         });
         const json = await response.json();
-        this.postToWebview({ command: 'postRulesToView', object: json });
+        this.postToWebview({ command: VscSvelteMessageTypes.rules, object: json });
         console.log("Server response: " + JSON.stringify(json));
     }
 
@@ -109,7 +110,7 @@ export class JacquesView {
         );
 
         console.log('Starting Jacques backend...');
-        const jacques = await spawn('python', [vscode.Uri.joinPath(extensionUri, 'backend', 'server.py').fsPath, '--port', Settings.BACKEND_PORT.toString()],);
+        const jacques = await spawn('python3.10', [vscode.Uri.joinPath(extensionUri, 'backend', 'server.py').fsPath, '--port', Settings.BACKEND_PORT.toString()],);
 
 
         jacques.stderr.on('data', function (data: string) {
@@ -210,22 +211,22 @@ export class JacquesView {
         this._panel.webview.onDidReceiveMessage(
             message => {
                 switch (message.type) {
-                    case "example":
+                    case SvelteVscMessageTypes.example:
                         let example = new Example(message.id, message.sourceValue, message.targetValue);
                         console.log("Sending example to backend: " + JSON.stringify(example));
                         JacquesView.sendExampleToBackend(example);
                         return;
-                    case "ruleUpdate":
-                        let rule = new Rule(message.id, message.sourceValue, message.targetValue);
+                    case SvelteVscMessageTypes.ruleOverride:
+                        let rule = new Rule(message.id, message.name, message.sourceValue, message.targetValue);
                         console.log("Sending rule update to backend: " + JSON.stringify(rule));
-                        JacquesView.sendRuleUpdateToBackend(rule);
-                    case "process_examples_request":
+                        JacquesView.sendRuleOverrideToBackend(rule);
+                    case SvelteVscMessageTypes.processExamples:
                         JacquesView.sendProcessExamplesRequest();
                         return;
-                    case "get_rules_request":
+                    case SvelteVscMessageTypes.getRules:
                         JacquesView.getRulesFromBackend();
                         return;
-                    case "reset":
+                    case SvelteVscMessageTypes.reset:
                         JacquesView.resetBackend();
                         return;
                 }

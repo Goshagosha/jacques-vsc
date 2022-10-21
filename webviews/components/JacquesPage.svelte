@@ -3,6 +3,10 @@
     import { onMount } from "svelte";
     import ExampleField from "../ui/ExampleField.svelte";
     import ResponseField from "../ui/ResponseField.svelte";
+    import {
+        SvelteVscMessageTypes,
+        VscSvelteMessageTypes,
+    } from "../../src/extension";
 
     let rules: Array<{ id: string; name: string; dsl: string; code: string }> =
         [];
@@ -35,7 +39,7 @@
         window.addEventListener("message", (event) => {
             const message = event.data;
             switch (message.command) {
-                case "postRulesToView":
+                case VscSvelteMessageTypes.rules:
                     rules = message.object;
                     break;
             }
@@ -59,7 +63,7 @@
     <button
         on:click={() =>
             tsvscode.postMessage({
-                type: "process_examples_request",
+                type: SvelteVscMessageTypes.processExamples,
             })}>Process all</button
     >
 
@@ -67,7 +71,7 @@
     <button
         on:click={() =>
             tsvscode.postMessage({
-                type: "get_rules_request",
+                type: SvelteVscMessageTypes.getRules,
             })}>Get rules</button
     >
 
@@ -75,7 +79,7 @@
     <button
         on:click={() =>
             tsvscode.postMessage({
-                type: "reset",
+                type: SvelteVscMessageTypes.reset,
             })}>Reset</button
     >
 </div>
@@ -86,8 +90,6 @@
         bind:name={rule.name}
         bind:targetValue={rule.dsl}
         bind:sourceValue={rule.code}
-        oldTargetValue={rule.dsl}
-        oldSourceValue={rule.code}
     />
 {/each}
 

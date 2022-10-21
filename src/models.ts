@@ -12,11 +12,13 @@ export class Example {
 
 export class Rule {
     id: string;
+    name: string;
     dsl: string;
     code: string;
 
-    constructor(id: string, sourceValue: string, targetValue: string) {
+    constructor(id: string, name: string, sourceValue: string, targetValue: string) {
         this.id = id;
+        this.name = name;
         this.dsl = sourceValue;
         this.code = targetValue;
     }
