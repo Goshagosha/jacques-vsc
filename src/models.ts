@@ -10,6 +10,21 @@ export class Example {
     }
 };
 
+export class RuleSource {
+    id: string;
+    name: string;
+    dsl: string;
+    code: string;
+
+    constructor(id: string, name: string, dsl: string, code: string) {
+        this.id = id;
+        this.name = name;
+        this.dsl = dsl;
+        this.code = code;
+    }
+
+}
+
 export class Rule {
     id: string;
     name: string;

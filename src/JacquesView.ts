@@ -1,10 +1,10 @@
 import { ChildProcess } from 'child_process';
 import path = require('path');
 import * as vscode from 'vscode';
-import { BackendPaths, Settings, SvelteVscMessageTypes, VscSvelteMessageTypes } from './extension';
-import { Example, Rule } from "./models";
+import { BackendPaths, Settings } from './extension';
+import { Example, Rule, RuleSource } from "./models";
 const { spawn } = require('child_process');
-import fetch from "node-fetch";
+import { SvelteVscMessageTypes, VscSvelteMessageTypes } from './messageTypes';
 
 export class JacquesView {
     public static currentPanel: JacquesView | undefined;
@@ -37,17 +37,46 @@ export class JacquesView {
         console.log("Server response: " + toString);
     }
 
-    public static async sendRuleOverrideToBackend(rule: Rule) {
+    public static async sendTranslationRequestToBackend(dsl: string) {
+        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + BackendPaths.translate, {
+            method: 'POST',
+            headers: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ dsl: dsl })
+        });
+        const json = await response.json();
+        this.postToWebview({ command: VscSvelteMessageTypes.translation, object: json });
+        const toString = JSON.stringify(json);
+        console.log("Server response: " + toString);
+    }
+
+    public static async sendRuleOverrideToBackend(ruleSource: RuleSource) {
         const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + BackendPaths.overrideRule, {
             method: 'POST',
             headers: {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(rule)
+            body: JSON.stringify(ruleSource)
         });
         const json = await response.json();
         this.postToWebview({ command: VscSvelteMessageTypes.overrideStatus, object: json });
+        const toString = JSON.stringify(json);
+        console.log("Server response: " + toString);
+    }
+
+    public static async sendRuleSourceRequestToBackend(ruleId: string) {
+        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + BackendPaths.getRuleSource + ruleId, {
+            method: 'GET',
+            headers: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'Content-Type': 'application/json'
+            },
+        });
+        const json = await response.json();
+        this.postToWebview({ command: VscSvelteMessageTypes.ruleSource, object: json });
         const toString = JSON.stringify(json);
         console.log("Server response: " + toString);
     }
@@ -110,7 +139,7 @@ export class JacquesView {
         );
 
         console.log('Starting Jacques backend...');
-        const jacques = await spawn('python3.10', [vscode.Uri.joinPath(extensionUri, 'backend', 'server.py').fsPath, '--port', Settings.BACKEND_PORT.toString()],);
+        const jacques = await spawn('python', [vscode.Uri.joinPath(extensionUri, 'backend', 'server.py').fsPath, '--port', Settings.BACKEND_PORT.toString()],);
 
 
         jacques.stderr.on('data', function (data: string) {
@@ -217,14 +246,22 @@ export class JacquesView {
                         JacquesView.sendExampleToBackend(example);
                         return;
                     case SvelteVscMessageTypes.ruleOverride:
-                        let rule = new Rule(message.id, message.name, message.sourceValue, message.targetValue);
+                        let rule = new RuleSource(message.id, message.name, message.dsl, message.code);
                         console.log("Sending rule update to backend: " + JSON.stringify(rule));
                         JacquesView.sendRuleOverrideToBackend(rule);
+                        return;
+                    case SvelteVscMessageTypes.getRuleSource:
+                        console.log("Sending rule source request to backend: " + message.id);
+                        JacquesView.sendRuleSourceRequestToBackend(message.id);
+                        return;
                     case SvelteVscMessageTypes.processExamples:
                         JacquesView.sendProcessExamplesRequest();
                         return;
                     case SvelteVscMessageTypes.getRules:
                         JacquesView.getRulesFromBackend();
+                        return;
+                    case SvelteVscMessageTypes.translationRequest:
+                        JacquesView.sendTranslationRequestToBackend(message.dsl);
                         return;
                     case SvelteVscMessageTypes.reset:
                         JacquesView.resetBackend();

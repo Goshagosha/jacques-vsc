@@ -1,45 +1,48 @@
 <script lang="ts">
-    import { VscSvelteMessageTypes } from "../../src/extension";
     import OverrideField from "./OverrideField.svelte";
 
     export let id: string = "";
     export let name: string = "";
     export let targetValue: string = "";
     export let sourceValue: string = "";
+    let overriding: boolean = false;
     let overrideCallback: () => void;
 </script>
 
-<div class="main-container">
-    <div class="rule-container">
-        <b>{name}</b>
-        {targetValue}
-        {sourceValue}
+{#if !overriding}
+    <div class="response-container">
+        <div class="rule-container">
+            <b>{name}</b><br />
+            {targetValue}<br />
+            {sourceValue}
+        </div>
+        <button
+            on:click={() => {
+                overriding = true;
+                overrideCallback();
+            }}>Override rule</button
+        >
     </div>
-    <!-- svelte-ignore missing-declaration -->
-    <button
-        on:click={() => {
-            overrideCallback();
-        }}>Override rule</button
-    >
-    <OverrideField {id} {name} bind:start={overrideCallback} />
-</div>
+{/if}
+<OverrideField {id} {name} bind:start={overrideCallback} />
 
 <style>
-    .main-container {
+    .response-container {
         display: flex;
         flex-direction: row;
-        background-color: gray;
+        border-color: gray;
+        border-width: 1px;
         padding: 1px;
     }
 
-    .main-container button {
+    .response-container button {
         position: relative;
         width: 10%;
         height: 94px;
         margin-left: 1px;
     }
 
-    .main-container button:disabled {
+    .response-container button:disabled {
         color: gray;
     }
 

@@ -1,12 +1,13 @@
 <!-- Language: svelte -->
 <script lang="ts">
     import { onMount } from "svelte";
-    import ExampleField from "../ui/ExampleField.svelte";
-    import ResponseField from "../ui/ResponseField.svelte";
     import {
         SvelteVscMessageTypes,
         VscSvelteMessageTypes,
-    } from "../../src/extension";
+    } from "../../src/messageTypes";
+    import ExampleField from "../ui/ExampleField.svelte";
+    import ResponseField from "../ui/ResponseField.svelte";
+    import TestField from "../ui/TestField.svelte";
 
     let rules: Array<{ id: string; name: string; dsl: string; code: string }> =
         [];
@@ -83,7 +84,9 @@
             })}>Reset</button
     >
 </div>
-
+{#if rules.length > 0}
+    <h2>Rules</h2>
+{/if}
 {#each rules as rule}
     <ResponseField
         bind:id={rule.id}
@@ -92,6 +95,9 @@
         bind:sourceValue={rule.code}
     />
 {/each}
+
+<h2>Test</h2>
+<TestField />
 
 <style>
     .button-panel {

@@ -1,10 +1,10 @@
 <script lang="ts">
-    import {
-        VscSvelteMessageTypes,
-        SvelteVscMessageTypes,
-    } from "../../src/extension";
     import { onMount } from "svelte";
     import { Warning, Check } from "svelte-codicons";
+    import {
+        SvelteVscMessageTypes,
+        VscSvelteMessageTypes,
+    } from "../../src/messageTypes";
     export let id: string;
     export let sourceValue: string = "";
     export let targetValue: string = "";

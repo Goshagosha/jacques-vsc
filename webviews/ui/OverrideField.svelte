@@ -1,11 +1,14 @@
 <script lang="ts">
-    import { VscSvelteMessageTypes } from "../../src/extension";
     import { onMount } from "svelte";
     import { Warning, Check } from "svelte-codicons";
+    import {
+        SvelteVscMessageTypes,
+        VscSvelteMessageTypes,
+    } from "../../src/messageTypes";
 
     export let id: string = "";
     export let name: string = "";
-    let grammar: string = "";
+    let dsl: string = "";
     let code: string = "";
     let oldGrammar: string = "";
     let oldCode: string = "";
@@ -13,17 +16,21 @@
     export let status: "warning" | "ok" | "none" = "none";
 
     export function start() {
+        tsvscode.postMessage({
+            type: SvelteVscMessageTypes.getRuleSource,
+            id: id,
+        });
         hidden = false;
     }
 
     $: {
-        if (grammar != oldGrammar) {
+        if (dsl != oldGrammar) {
             status = "none";
         }
         if (code != oldCode) {
             status = "none";
         }
-        oldGrammar = grammar;
+        oldGrammar = dsl;
         oldCode = code;
     }
 
@@ -38,41 +45,55 @@
                         }
                     }
                     break;
+                case VscSvelteMessageTypes.ruleSource:
+                    if (message.object.id == id) {
+                        dsl = message.object.dsl;
+                        code = message.object.code;
+                    }
+                    break;
             }
         });
     });
 </script>
 
-<div class="main-container">
-    <div class="example-container">
-        <b>{name}</b>
-        <textarea
-            rows="1"
-            cols="50"
-            bind:value={grammar}
-            style="resize: none; margin-bottom: 2px;"
-        />
-        <textarea rows="3" cols="50" bind:value={code} style="resize: none;" />
-        <div class="icon-container" style="hidden: {status == 'none'}">
-            {#if status === "warning"}
-                <Warning />
-            {:else if status === "ok"}
-                <Check />
-            {/if}
+{#if !hidden}
+    <div class="main-container">
+        <div class="example-container">
+            <b>{name}</b>
+            <textarea
+                rows="1"
+                cols="50"
+                bind:value={dsl}
+                style="resize: none; margin-bottom: 2px;"
+            />
+            <textarea
+                rows="3"
+                cols="50"
+                bind:value={code}
+                style="resize: none;"
+            />
+            <div class="icon-container" style="hidden: {status == 'none'}">
+                {#if status === "warning"}
+                    <Warning />
+                {:else if status === "ok"}
+                    <Check />
+                {/if}
+            </div>
         </div>
+        <!-- svelte-ignore missing-declaration -->
+        <button
+            disabled={status == "ok"}
+            on:click={() =>
+                tsvscode.postMessage({
+                    type: SvelteVscMessageTypes.ruleOverride,
+                    name: name,
+                    id: id,
+                    dsl: dsl,
+                    code: code,
+                })}>Update rule</button
+        >
     </div>
-    <!-- svelte-ignore missing-declaration -->
-    <button
-        disabled={status == "ok"}
-        on:click={() =>
-            tsvscode.postMessage({
-                type: "ruleUpdate",
-                id: id,
-                sourceValue: grammar,
-                targetValue: code,
-            })}>Update rule</button
-    >
-</div>
+{/if}
 
 <style>
     .main-container {
@@ -85,7 +106,7 @@
     .main-container button {
         position: relative;
         width: 10%;
-        height: 94px;
+        height: 112px;
         margin-left: 1px;
     }
 
@@ -96,7 +117,7 @@
     .example-container {
         position: relative;
         width: 90%;
-        height: 94px;
+        height: 112px;
     }
 
     .icon-container {
