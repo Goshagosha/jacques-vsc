@@ -1,8 +1,14 @@
 {
   "name": "jacques-vsc",
   "displayName": "jacques-vsc",
-  "description": "",
+  "description": "Frontend extension for Jacques DSL-to-Code rule inference project (https://github.com/Goshagosha/Jacques)",
   "version": "0.0.1",
+  "author": {
+    "name": "Egor Svezhintsev",
+    "email": "svezhegor@gmail.com"
+  },
+  "homepage": "https://github.com/Goshagosha/jacques-vsc",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.71.0"
   },
@@ -29,7 +35,7 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "yarn run compile",
+    "vscode:prepublish": "rollup -c",
     "compile": "tsc -p ./",
     "watch": "concurrently \"rollup -c -w\" \"tsc -watch -p ./\"",
     "pretest": "yarn run compile && yarn run lint",
@@ -60,6 +66,9 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "svelte-codicons": "^0.10.1"
+    "@types/node-fetch": "^2.6.2",
+    "node-fetch": "2.6.6",
+    "svelte-codicons": "^0.10.1",
+    "wait-port": "^1.0.4"
   }
 }

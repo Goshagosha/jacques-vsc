@@ -80,6 +80,14 @@
     <button
         on:click={() =>
             tsvscode.postMessage({
+                type: SvelteVscMessageTypes.exportRequest,
+            })}>Export</button
+    >
+
+    <!-- svelte-ignore missing-declaration -->
+    <button
+        on:click={() =>
+            tsvscode.postMessage({
                 type: SvelteVscMessageTypes.reset,
             })}>Reset</button
     >

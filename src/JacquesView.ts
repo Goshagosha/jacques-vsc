@@ -5,6 +5,9 @@ import { BackendPaths, Settings } from './extension';
 import { Example, Rule, RuleSource } from "./models";
 const { spawn } = require('child_process');
 import { SvelteVscMessageTypes, VscSvelteMessageTypes } from './messageTypes';
+const fetch = require('node-fetch');
+const fs = require('fs');
+const waitPort = require('wait-port');
 
 export class JacquesView {
     public static currentPanel: JacquesView | undefined;
@@ -96,7 +99,7 @@ export class JacquesView {
 
     public static async sendProcessExamplesRequest() {
         const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + BackendPaths.processAll, {
-            method: 'GET',
+            method: 'POST',
             headers: {
                 // eslint-disable-next-line @typescript-eslint/naming-convention
                 'Content-Type': 'application/json'
@@ -119,6 +122,35 @@ export class JacquesView {
         console.log("Server response: " + JSON.stringify(json));
     }
 
+    public static async postExportRulesToBackend(filename: string) {
+        const response = await fetch('http://localhost:' + Settings.BACKEND_PORT + BackendPaths.exportRules, {
+            method: 'POST',
+            headers: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ filename: filename })
+        });
+        const json = await response.json();
+        console.log("Server response: " + JSON.stringify(json));
+    }
+
+    public static async promptExportFilename() {
+        const filename = await vscode.window.showInputBox({
+            prompt: "Enter a filename for the exported rules",
+            value: path.join(".", "exported_rules.py")
+        });
+        if (filename) {
+            let cwd = vscode.workspace.workspaceFolders?.map(folder => folder.uri.path)[0];
+            if (cwd === undefined) {
+                vscode.window.showErrorMessage("No workspace folder found");
+            } else {
+                let filepath = path.join(cwd!, filename);
+                this.postExportRulesToBackend(filepath);
+            }
+        }
+    }
+
     public static async createOrShow(extensionUri: vscode.Uri) {
         const column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 
@@ -138,18 +170,49 @@ export class JacquesView {
             }
         );
 
-        console.log('Starting Jacques backend...');
-        const jacques = await spawn('python', [vscode.Uri.joinPath(extensionUri, 'backend', 'server.py').fsPath, '--port', Settings.BACKEND_PORT.toString()],);
 
+        const cwd = path.join(__dirname, "..");
+        let pythonPath = '';
+        if (process.platform === 'win32') {
+            pythonPath = path.join(cwd, "PythonInterpreter", "Windows", "install", "python",);
+        }
+        else if (process.platform === 'darwin') {
+            pythonPath = path.join(cwd, "PythonInterpreter", "Mac", "install", "bin", "python3");
+            // change the permission of python3 in interpreter folder on Mac
+            try {
+                const fd = fs.openSync(pythonPath, "r");
+                fs.fchmodSync(fd, 0o744);
+                console.log("File permission change successfully");
+            }
+            catch (error) {
+                console.log(error);
+            }
+        }
+        if (!pythonPath) {
+            throw new Error(`This platform is ${process.platform}`);
+        } else {
+            console.log('Starting Jacques backend...');
+            console.log('Python path: ' + __dirname);
+            const jacques = await spawn(pythonPath, [path.join(__dirname, 'jacques_server_script.py'), '--port', Settings.BACKEND_PORT.toString()], { shell: true });
 
-        jacques.stderr.on('data', function (data: string) {
-            console.log('Server LOG: ' + data);
-        });
-        jacques.stderr.on('data', function (data: string) {
-            console.log('Server LOG: ' + data);
-        });
+            let backendUp = waitPort({ host: 'localhost', port: Settings.BACKEND_PORT, timeout: 30000 });
 
-        JacquesView.currentPanel = new JacquesView(panel, extensionUri, jacques);
+            vscode.window.withProgress({
+                cancellable: false,
+                location: vscode.ProgressLocation.Notification,
+                title: 'Waiting for Jacques backend to start',
+            }, async (progress) => {
+                await backendUp;
+            });
+
+            await backendUp;
+
+            jacques.stderr.on('data', function (data: string) {
+                console.log('Server LOG: ' + data);
+            });
+
+            JacquesView.currentPanel = new JacquesView(panel, extensionUri, jacques);
+        }
     }
 
 
@@ -165,9 +228,8 @@ export class JacquesView {
     private _getWebviewContent(webview: vscode.Webview) {
         const scriptUri = webview.asWebviewUri(vscode.Uri.file(path.join(this._extensionUri.fsPath, 'out', 'compiled', 'JacquesPage.js')));
 
-        const stylesResetPath = vscode.Uri.file(path.join(this._extensionUri.fsPath, 'src', 'media', 'reset.css'));
-
-        const stylesMainPath = vscode.Uri.file(path.join(this._extensionUri.fsPath, 'src', 'media', 'vscode.css'));
+        const stylesResetPath = vscode.Uri.file(path.join(this._extensionUri.fsPath, 'out', 'compiled', 'reset.css'));
+        const stylesMainPath = vscode.Uri.file(path.join(this._extensionUri.fsPath, 'out', 'compiled', 'vscode.css'));
 
         const stylesResetUri = webview.asWebviewUri(stylesResetPath);
         const stylesMainUri = webview.asWebviewUri(stylesMainPath);
@@ -185,10 +247,9 @@ export class JacquesView {
 				-->
 				<meta http-equiv="Content-Security-Policy" content="style-src ${webview.cspSource}; img-src ${webview.cspSource} https:;">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<link href="${stylesResetUri}" rel="stylesheet">
-				<link href="${stylesMainUri}" rel="stylesheet">
+                <link href="${stylesResetUri}" rel="stylesheet">
+                <link href="${stylesMainUri}" rel="stylesheet">
                 <link href="${cssUri}" rel="stylesheet">
-				<title>Cat Coding</title>
 			</head>
             <script nonce="${nonce}">
                 const tsvscode = acquireVsCodeApi();
@@ -266,6 +327,8 @@ export class JacquesView {
                     case SvelteVscMessageTypes.reset:
                         JacquesView.resetBackend();
                         return;
+                    case SvelteVscMessageTypes.exportRequest:
+                        JacquesView.promptExportFilename();
                 }
             },
             null,

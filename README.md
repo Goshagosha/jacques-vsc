@@ -1,71 +1,46 @@
-# jacques-vsc README
+# Jacques-vsc
+Frontend extension for [Jacques](https://github.com/Goshagosha/Jacques)  
+Inferring DSL-to-code translation rule sets from examples.
 
-This is the README for your extension "jacques-vsc". After writing up a brief description, we recommend including the following sections.
+# Installation
+VSCode command palette ( Ctrl + Shift + P ) -> Extensions: Install from VSIX  
 
-## Features
+# Use
+VSCode command palette ( Ctrl + Shift + P ) -> Jacques: Start  
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+![](docs/jacques-csv.png)
 
-For example if there is an image subfolder under your extension project workspace:
+**Important!**  
+Jacques expects to recognize variable objects as such, to decompose queries into ASTs correctly. This means that first query almost always have to be a definition. We recommend something like this:  
+DSL: `## data = load from 'file.csv'`  
+Code: `data = pd.load_csv('file.csv')`   
+  
+Push example -> Process all -> Get rules  
+  
+Now you can give it more complex and long examples, using `data` as a dummy object. Try this next:  
+DSL: `## on data | select columns 'SNo', 'ObservationDate' | head 10 | sort by 'Confirmed' ascending | show `  
+Code: `print(data[['SNo', 'ObservationDate']].head(10).sort_values(['Confirmed'], axis='index', ascending=[True]))`  
 
-\!\[feature X\]\(images/feature-x.png\)
+"Export" button allows to export learned rules into a standalone NLDSL spec script.  
+To completely reset inference progress, use "Reset".
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+# Statistics
 
-## Requirements
+## src/
+| path | files | code | comment | blank | total |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| . | 11 | 540 | 50 | 93 | 683 |
+| html | 1 | 29 | 0 | 3 | 32 |
+| media | 2 | 104 | 0 | 17 | 121 |
+| test | 3 | 33 | 33 | 13 | 79 |
+| test/suite | 2 | 20 | 28 | 7 | 55 |
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## webviews/
+| path | files | code | comment | blank | total |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| . | 8 | 440 | 14 | 50 | 504 |
+| components | 1 | 103 | 5 | 13 | 121 |
+| pages | 1 | 5 | 0 | 2 | 7 |
+| ui | 4 | 321 | 3 | 33 | 357 |
 
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+No tests or devdocumentation

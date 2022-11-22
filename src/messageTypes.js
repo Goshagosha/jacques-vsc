@@ -6,6 +6,7 @@ export class SvelteVscMessageTypes {
     static getRules = "getRulesRequest";
     static reset = "reset";
     static translationRequest = "translationRequest";
+    static exportRequest = "exportRequest";
 }
 
 export class VscSvelteMessageTypes {

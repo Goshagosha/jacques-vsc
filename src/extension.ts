@@ -17,6 +17,7 @@ export class BackendPaths {
 	public static processAll = '/process_all_examples';
 	public static getRuleSource = '/get_rule_source/';
 	public static translate = '/translate';
+	public static exportRules = '/export_rules';
 }
 
 
